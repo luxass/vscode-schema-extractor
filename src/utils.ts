@@ -10,6 +10,10 @@ const readFileAsync = promisify(readFile);
 export async function getSchemaList(): Promise<SchemaList | undefined> {
     try {
         const {data} = await axios.get<SchemaList>(SCHEMA_LIST_URL);
+        if (!data.schemas) {
+            window.showErrorMessage("No schemas found in list.");
+            return;
+        }
         return data;
     } catch (e) {
         console.error(e);

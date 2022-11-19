@@ -1,4 +1,4 @@
 export interface SchemaList {
-    last_release: string;
+    version: string;
     schemas: string[]
 }

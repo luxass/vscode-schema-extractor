@@ -1,10 +1,16 @@
 {
   "name": "vscode-schema-extractor",
+  "publisher": "luxass",
   "displayName": "Schema Extractor",
   "description": "A extension used to extract Visual Studio Code Schemas",
+  "icon": "media/icon.png",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.73.1"
+  },
+  "author": {
+    "name": "Lucas Nørgård",
+    "email": "lucasnrgaard@gmail.com"
   },
   "categories": [
     "Other"
@@ -14,6 +20,10 @@
     "onCommand:schema-extractor.extract-all",
     "onCommand:schema-extractor.extract-one"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luxass/vscode-schema-extractor.git"
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [

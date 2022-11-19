@@ -43,7 +43,9 @@
     "vscode:prepublish": "pnpm run esbuild --minify",
     "esbuild": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "esbuild:build": "pnpm run esbuild --sourcemap",
-    "esbuild:dev": "pnpm run esbuild --sourcemap --watch"
+    "esbuild:dev": "pnpm run esbuild --sourcemap --watch",
+    "package": "pnpm vsce package --no-dependencies",
+    "release": "pnpm vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^18.11.9",

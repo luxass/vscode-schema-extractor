@@ -4,9 +4,9 @@
   "displayName": "Schema Extractor",
   "description": "A extension used to extract Visual Studio Code Schemas",
   "icon": "media/icon.png",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
-    "vscode": "^1.73.1"
+    "vscode": "^1.70.0"
   },
   "author": {
     "name": "Lucas Nørgård",
@@ -25,6 +25,7 @@
     "url": "https://github.com/luxass/vscode-schema-extractor.git"
   },
   "main": "./dist/extension.js",
+  "browser": "./dist/browser/extension.js",
   "contributes": {
     "commands": [
       {
@@ -37,25 +38,50 @@
         "title": "Extract Schema",
         "category": "Schema Extractor"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Schema Extractor",
+      "properties": {
+        "schema-extractor.metadataUri": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://raw.githubusercontent.com/luxass/vscode-schemas/main/metadata.json",
+          "description": "The URI to the metadata file"
+        },
+        "schema-extractor.output": {
+          "type": "string",
+          "default": "./extracted-schemas",
+          "description": "Output path for the extracted schemas"
+        }
+      }
+    }
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run esbuild --minify",
-    "esbuild": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
-    "build": "pnpm run esbuild --sourcemap",
-    "dev": "pnpm run esbuild --sourcemap --watch",
+    "vscode:prepublish": "concurrently \"pnpm run build:web --minify\" \"pnpm run build:ext --minify\"",
+    "build": "concurrently \"pnpm run build:web\" \"pnpm run build:ext\"",
+    "build:web": "node --experimental-modules ./scripts/build.mjs --target web --mode production",
+    "build:ext": "node --experimental-modules ./scripts/build.mjs --target ext --mode production",
+    "dev": "concurrently \"pnpm run dev:web\" \"pnpm run dev:ext\"",
+    "dev:web": "node --experimental-modules ./scripts/build.mjs --target web --watch",
+    "dev:ext": "node --experimental-modules ./scripts/build.mjs --target ext --watch",
+    "browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --folder-uri=vscode-vfs://test/",
     "package": "pnpm vsce package --no-dependencies",
     "release": "pnpm vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^18.11.9",
-    "@types/vscode": "^1.73.1",
+    "@types/vscode": "^1.70.0",
+    "@vscode/test-web": "^0.0.32",
+    "concurrently": "^7.6.0",
     "esbuild": "^0.15.14",
     "typescript": "^4.9.3",
     "vsce": "^2.14.0"
   },
   "dependencies": {
-    "axios": "^1.1.3"
+    "node-fetch": "^3.3.0"
+  },
+  "capabilities": {
+    "virtualWorkspaces": true
   },
   "license": "MIT"
 }

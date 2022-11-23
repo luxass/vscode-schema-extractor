@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "es2020"],
+    "paths": {
+      "fetch-shim": ["src/env/fetch-web.ts"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/env/fetch-node.ts"]
+}

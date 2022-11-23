@@ -1,37 +1,64 @@
-import axios from "axios";
-import {window} from "vscode";
-import {SCHEMA_LIST_URL} from "./constants";
-import {SchemaList} from "./types";
-import {readFile} from "fs";
-import {promisify} from "util";
+import { Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import fetch from 'fetch-shim';
+import type { Metadata } from './types';
 
-const readFileAsync = promisify(readFile);
-
-export async function getSchemaList(): Promise<SchemaList | undefined> {
-    try {
-        const {data} = await axios.get<SchemaList>(SCHEMA_LIST_URL);
-        if (!data.schemas) {
-            window.showErrorMessage("No schemas found in list.");
-            return;
-        }
-        return data;
-    } catch (e) {
-        console.error(e);
-        window.showErrorMessage(
-            "Something went wrong, while trying to fetch schema list."
-        );
-    }
+export function getConfiguration(): {
+  metadataUri: string;
+  outputPath: string;
+} {
+  return {
+    metadataUri:
+      workspace
+        .getConfiguration('schema-extractor')
+        .get<string>('metadataUri') ||
+      'https://raw.githubusercontent.com/luxass/vscode-schemas/main/metadata.json',
+    outputPath:
+      workspace.getConfiguration('schema-extractor').get<string>('output') ||
+      './extracted-schemas'
+  };
 }
 
-export async function getSchemaListLocal(localSchemaPath: string) {
-    try {
-
-        const content = await readFileAsync(localSchemaPath, {encoding: "utf8"});
-        return JSON.parse(content);
-    } catch (e) {
-        console.error(e);
-        window.showErrorMessage(
-            "Something went wrong, while trying to read and parse schema list."
-        );
+export async function getSchemaList(
+  url: string
+): Promise<Metadata | undefined> {
+  try {
+    const { scheme } = Uri.parse(url);
+    if (!['http', 'https'].includes(scheme)) {
+      window.showErrorMessage(
+        'Invalid URL. Only HTTP and HTTPS are supported.'
+      );
+      return;
     }
+
+    const res = await fetch(url);
+    const data = (await res.json()) as Metadata;
+    if (!data.schemas) {
+      window.showErrorMessage('No schemas found in list.');
+      return;
+    }
+    return data;
+  } catch (e) {
+    console.error(e);
+    window.showErrorMessage(
+      'Something went wrong, while trying to fetch schema list.'
+    );
+  }
+}
+
+export async function getWorkspace(): Promise<WorkspaceFolder | undefined> {
+  const workspaces = workspace.workspaceFolders;
+  if (!workspaces || !workspaces.length) {
+    window.showErrorMessage('No workspace opened.');
+    return;
+  }
+  if (workspaces.length > 1) {
+    const pickedWorkspace = await window.showWorkspaceFolderPick();
+    if (!pickedWorkspace) {
+      window.showErrorMessage('No workspace selected.');
+      return;
+    }
+    return pickedWorkspace;
+  } else {
+    return workspaces[0];
+  }
 }

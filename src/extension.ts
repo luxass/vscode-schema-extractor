@@ -14,7 +14,7 @@ export function activate(context: ExtensionContext) {
 
       const baseUri = _workspace.uri;
 
-      const root = await getSchemaList(metadataUri);
+      const root = await getSchemaList(baseUri, metadataUri);
 
       if (!root) {
         return;
@@ -84,7 +84,7 @@ export function activate(context: ExtensionContext) {
 
       const baseUri = _workspace.uri;
 
-      const root = await getSchemaList(metadataUri);
+      const root = await getSchemaList(baseUri, metadataUri);
 
       if (!root) {
         return;

@@ -1,7 +1,11 @@
-import { Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import {
+  Uri,
+  window,
+  workspace,
+  WorkspaceFolder
+} from 'vscode';
 import fetch from 'fetch-shim';
 import type { Metadata } from './types';
-
 export function getConfiguration(): {
   metadataUri: string;
   outputPath: string;
@@ -19,15 +23,29 @@ export function getConfiguration(): {
 }
 
 export async function getSchemaList(
+  baseUri: Uri,
   url: string
 ): Promise<Metadata | undefined> {
   try {
     const { scheme } = Uri.parse(url);
-    if (!['http', 'https'].includes(scheme)) {
-      window.showErrorMessage(
-        'Invalid URL. Only HTTP and HTTPS are supported.'
-      );
+    console.log(scheme);
+    
+    if (!['http', 'https', 'file'].includes(scheme)) {
+      window.showErrorMessage('Invalid URL. Only HTTP, HTTPS and file are supported.');
       return;
+    }
+
+    if (scheme === 'file') {
+      const content = JSON.parse(new TextDecoder('utf8').decode(
+        await workspace.fs.readFile(
+          Uri.joinPath(baseUri, url)
+        )
+      )) as Metadata;
+      if (!content.schemas) {
+        window.showErrorMessage('No schemas found in list.');
+        return;
+      }
+      return content;
     }
 
     const res = await fetch(url);

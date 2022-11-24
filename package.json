@@ -4,7 +4,7 @@
   "displayName": "Schema Extractor",
   "description": "A extension used to extract Visual Studio Code Schemas",
   "icon": "media/icon.png",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -44,9 +44,8 @@
       "properties": {
         "schema-extractor.metadataUri": {
           "type": "string",
-          "format": "uri",
           "default": "https://raw.githubusercontent.com/luxass/vscode-schemas/main/metadata.json",
-          "description": "The URI to the metadata file"
+          "description": "The URI to the metadata file (Local File or URL)"
         },
         "schema-extractor.output": {
           "type": "string",
@@ -64,7 +63,9 @@
     "dev": "concurrently \"pnpm run dev:web\" \"pnpm run dev:ext\"",
     "dev:web": "node --experimental-modules ./scripts/build.mjs --target web --watch",
     "dev:ext": "node --experimental-modules ./scripts/build.mjs --target ext --watch",
-    "browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --folder-uri=vscode-vfs://test/",
+    "browser": "vscode-test-web --extensionDevelopmentPath=. --folder-uri=vscode-vfs://github/luxass/vscode-schema-extractor",
+    "web:serve": "npx serve --cors -l 5000",
+    "web:tunnel": "npx localtunnel -p 5000",
     "package": "pnpm vsce package --no-dependencies",
     "release": "pnpm vsce publish --no-dependencies"
   },

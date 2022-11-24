@@ -37,6 +37,7 @@ build({
   target: ['es2020', 'chrome91', 'node16'],
   minify: minify,
   treeShaking: true,
+  
   tsconfig: target === 'web' ? 'tsconfig.web.json' : 'tsconfig.json',
   watch: watch,
   define: {

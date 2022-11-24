@@ -28,7 +28,6 @@ export async function getSchemaList(
 ): Promise<Metadata | undefined> {
   try {
     const { scheme } = Uri.parse(url);
-    console.log(scheme);
     
     if (!['http', 'https', 'file'].includes(scheme)) {
       window.showErrorMessage('Invalid URL. Only HTTP, HTTPS and file are supported.');

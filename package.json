@@ -4,7 +4,7 @@
   "displayName": "Schema Extractor",
   "description": "A extension used to extract Visual Studio Code Schemas",
   "icon": "media/icon.png",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -51,9 +51,22 @@
           "type": "string",
           "default": "./extracted-schemas",
           "description": "Output path for the extracted schemas"
+        },
+        "schema-extractor.keybindings": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable built-in keybinds to generate schemas."
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "schema-extractor.extract-all",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s",
+        "when": "config.schema-extractor.keybindings"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "concurrently \"pnpm run build:web --minify\" \"pnpm run build:ext --minify\"",

@@ -4,7 +4,7 @@
   "displayName": "Schema Extractor",
   "description": "A extension used to extract Visual Studio Code Schemas",
   "icon": "media/icon.png",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.70.0"
   },

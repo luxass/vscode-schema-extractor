@@ -1,5 +1,10 @@
 import { ExtensionContext, commands, window, workspace, Uri } from 'vscode';
-import { getConfiguration, getSchemaList, getWorkspace } from './utils';
+import {
+  extractSchema,
+  getConfiguration,
+  getSchemaList,
+  getWorkspace
+} from './utils';
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(
@@ -15,7 +20,7 @@ export function activate(context: ExtensionContext) {
       const baseUri = _workspace.uri;
 
       const root = await getSchemaList(baseUri, metadataUri);
-
+      
       if (!root) {
         return;
       }
@@ -35,7 +40,8 @@ export function activate(context: ExtensionContext) {
         (await window.showInputBox({
           title: 'Output path',
           value: './'
-        }));
+        })) ||
+        './';
 
       if (!output) {
         output = './';
@@ -43,31 +49,14 @@ export function activate(context: ExtensionContext) {
 
       await workspace.fs.createDirectory(Uri.joinPath(baseUri, output));
 
-      await Promise.all(
-        root.schemas.map(async (schema) => {
-          try {
-            const text = (
-              await workspace.openTextDocument(Uri.parse(schema))
-            ).getText();
-
-            const parsedSchema = JSON.parse(text);
-
-            await workspace.fs.writeFile(
-              Uri.joinPath(
-                baseUri,
-                output!,
-                schema.replace(/^vscode:\/\/schemas(.*)/, '$1.json')
-              ),
-              new TextEncoder().encode(JSON.stringify(parsedSchema, null, 2))
-            );
-          } catch (e) {
-            window.showErrorMessage(
-              `Something went wrong, while trying to extract ${schema}`
-            );
-            console.error(e);
-          }
-        })
-      );
+      await Promise.all([
+        ...(root.schemas || []).map(async (schema) =>
+          extractSchema(baseUri, output, schema)
+        ),
+        ...(root.schema_urls || []).map(async (schema) =>
+          extractSchema(baseUri, output, schema)
+        )
+      ]);
       window.showInformationMessage('Schemas extracted.');
     })
   );
@@ -100,9 +89,12 @@ export function activate(context: ExtensionContext) {
         return;
       }
 
-      const schema = await window.showQuickPick(root.schemas, {
-        title: 'Pick a schema'
-      });
+      const schema = await window.showQuickPick(
+        root.schemas.concat(root.schema_urls),
+        {
+          title: 'Pick a schema'
+        }
+      );
 
       if (!schema) {
         return;
@@ -113,7 +105,8 @@ export function activate(context: ExtensionContext) {
         (await window.showInputBox({
           title: 'Output path',
           value: './'
-        }));
+        })) ||
+        './';
 
       if (!output) {
         output = './';
@@ -121,27 +114,7 @@ export function activate(context: ExtensionContext) {
 
       await workspace.fs.createDirectory(Uri.joinPath(baseUri, output));
 
-      try {
-        const text = (
-          await workspace.openTextDocument(Uri.parse(schema))
-        ).getText();
-
-        const parsedSchema = JSON.parse(text);
-
-        await workspace.fs.writeFile(
-          Uri.joinPath(
-            baseUri,
-            output!,
-            schema.replace(/^vscode:\/\/schemas(.*)/, '$1.json')
-          ),
-          new TextEncoder().encode(JSON.stringify(parsedSchema, null, 2))
-        );
-      } catch (e) {
-        window.showErrorMessage(
-          `Something went wrong, while trying to extract ${schema}`
-        );
-        console.error(e);
-      }
+      await extractSchema(baseUri, output, schema);
     })
   );
 }

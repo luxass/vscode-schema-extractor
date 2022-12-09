@@ -1,61 +1,57 @@
-import { Uri, window, workspace, WorkspaceFolder } from 'vscode';
-import fetch from 'fetch-shim';
-import type { Metadata } from './types';
-export function getConfiguration(): {
-  metadataUri: string;
-  outputPath: string;
-} {
+import fetch from "fetch-shim";
+import { Uri, window, workspace, WorkspaceFolder } from "vscode";
+import type { ConfigurationResult, Release, SchemaUris } from "./types";
+
+export function getConfiguration(): ConfigurationResult {
   return {
-    metadataUri:
+    releaseList:
       workspace
-        .getConfiguration('schema-extractor')
-        .get<string>('metadataUri') ||
-      'https://raw.githubusercontent.com/luxass/vscode-schemas/main/metadata.json',
+        .getConfiguration("schema-extractor")
+        .get<string>("releaseList") ||
+      "https://raw.githubusercontent.com/luxass/vscode-schemas/main/schemas/.vscode-schemas.json",
     outputPath:
-      workspace.getConfiguration('schema-extractor').get<string>('output') ||
-      './extracted-schemas'
+      workspace.getConfiguration("schema-extractor").get<string>("output") ||
+      "./extracted-schemas"
   };
 }
 
 export async function getSchemaList(
   baseUri: Uri,
   url: string
-): Promise<Metadata | undefined> {
+): Promise<SchemaUris | undefined> {
   try {
     const { scheme } = Uri.parse(url);
-    console.log(scheme);
-
-    if (!['http', 'https', 'file'].includes(scheme)) {
+    if (!["http", "https", "file"].includes(scheme)) {
       window.showErrorMessage(
-        'Invalid URL. Only HTTP, HTTPS and file are supported.'
+        "Invalid URL. Only HTTP, HTTPS and file are supported."
       );
       return;
     }
 
-    if (scheme === 'file') {
+    if (scheme === "file") {
       const content = JSON.parse(
-        new TextDecoder('utf8').decode(
+        new TextDecoder("utf8").decode(
           await workspace.fs.readFile(Uri.joinPath(baseUri, url))
         )
-      ) as Metadata;
-      if (!content.schemas.length && !content.schema_urls.length) {
-        window.showErrorMessage('No schemas found in list.');
+      ) as SchemaUris;
+      if (!content.schemas.length && !content.externalSchemas.length) {
+        window.showErrorMessage("No schemas found in list.");
         return;
       }
       return content;
     }
 
     const res = await fetch(url);
-    const data = (await res.json()) as Metadata;
-    if (!data.schemas.length && !data.schema_urls.length) {
-      window.showErrorMessage('No schemas found in list.');
+    const data = (await res.json()) as SchemaUris;
+    if (!data.schemas.length && !data.externalSchemas.length) {
+      window.showErrorMessage("No schemas found in list.");
       return;
     }
     return data;
   } catch (e) {
     console.error(e);
     window.showErrorMessage(
-      'Something went wrong, while trying to fetch schema list.'
+      "Something went wrong, while trying to fetch schema list."
     );
   }
 }
@@ -63,13 +59,13 @@ export async function getSchemaList(
 export async function getWorkspace(): Promise<WorkspaceFolder | undefined> {
   const workspaces = workspace.workspaceFolders;
   if (!workspaces || !workspaces.length) {
-    window.showErrorMessage('No workspace opened.');
+    window.showErrorMessage("No workspace opened.");
     return;
   }
   if (workspaces.length > 1) {
     const pickedWorkspace = await window.showWorkspaceFolderPick();
     if (!pickedWorkspace) {
-      window.showErrorMessage('No workspace selected.');
+      window.showErrorMessage("No workspace selected.");
       return;
     }
     return pickedWorkspace;
@@ -86,24 +82,40 @@ export async function extractSchema(
   try {
     const { authority } = Uri.parse(schema);
 
-    if (authority === 'raw.githubusercontent.com') {
+    if (authority === "raw.githubusercontent.com") {
       const res = await fetch(schema);
       const data = await res.json();
+      const match = schema.match(
+        /^https:\/\/raw\.githubusercontent\.com\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/([\w.-]*)\/[\w.-]*\/(.*)$/
+      );
 
-      console.log(  schema.replace(
-        /^https:\/\/raw.githubusercontent.com\/microsoft\/vscode\/(\d+\.)(\d+\.)(\*|\d+)(.*)/,
-        '$1.json'
-      ));
+      if (!match) {
+        window.showErrorMessage(
+          `Something went wrong, while trying to extract ${schema}`
+        );
+        return;
+      }
+
+      const [_url, repo, path] = match;
+      let fileName;
       
+      if (repo === "vscode" && path.startsWith("extension")) {
+        const [ext, _schema, file] = path.split("/").slice(1);
+        fileName = `${ext}/${file}`;
+      } else {
+        const splitted = path.split("/");
+        fileName = splitted.at(-1);
+      }
+
+      if (!fileName) {
+        window.showErrorMessage(
+          `Something went wrong, while trying to parse filename`
+        );
+        return;
+      }
+
       await workspace.fs.writeFile(
-        Uri.joinPath(
-          baseUri,
-          output,
-          schema.replace(
-            /^https:\/\/raw.githubusercontent.com\/microsoft\/vscode\/(\d+\.)(\d+\.)(\*|\d+)(.*)/,
-            '$4.json'
-          )
-        ),
+        Uri.joinPath(baseUri, output, "external-schemas", repo, fileName),
         new TextEncoder().encode(JSON.stringify(data, null, 2))
       );
       return;
@@ -119,7 +131,7 @@ export async function extractSchema(
       Uri.joinPath(
         baseUri,
         output!,
-        schema.replace(/^vscode:\/\/schemas(.*)/, '$1.json')
+        schema.replace(/^vscode:\/\/schemas(.*)/, "$1.json")
       ),
       new TextEncoder().encode(JSON.stringify(parsedSchema, null, 2))
     );
@@ -128,5 +140,63 @@ export async function extractSchema(
       `Something went wrong, while trying to extract ${schema}`
     );
     console.error(e);
+  }
+}
+
+export async function getReleases(
+  baseUri: Uri,
+  url: string
+): Promise<Array<Release> | undefined> {
+  try {
+    const { scheme } = Uri.parse(url);
+    if (!["http", "https", "file"].includes(scheme)) {
+      window.showErrorMessage(
+        "Invalid URL. Only HTTP, HTTPS and file are supported."
+      );
+      return;
+    }
+
+    if (scheme === "file") {
+      const content = JSON.parse(
+        new TextDecoder("utf8").decode(
+          await workspace.fs.readFile(Uri.joinPath(baseUri, url))
+        )
+      );
+
+      if (!Array.isArray(content)) {
+        window.showErrorMessage("Invalid list of releases.");
+        return;
+      }
+
+      if (!content.length) {
+        window.showErrorMessage("No releases found in list.");
+        return;
+      }
+
+      if (!content.length) {
+        window.showErrorMessage("No schemas found in list.");
+        return;
+      }
+      return content;
+    }
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      window.showErrorMessage("Invalid list of releases.");
+      return;
+    }
+
+    if (!data.length) {
+      window.showErrorMessage("No schemas found in list.");
+      return;
+    }
+    return data;
+  } catch (e) {
+    console.error(e);
+    window.showErrorMessage(
+      "Something went wrong, while trying to fetch list of releases."
+    );
   }
 }

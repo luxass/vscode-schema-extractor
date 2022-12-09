@@ -4,7 +4,7 @@
   "displayName": "Schema Extractor",
   "description": "A extension used to extract Visual Studio Code Schemas",
   "icon": "media/icon.png",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -42,31 +42,18 @@
     "configuration": {
       "title": "Schema Extractor",
       "properties": {
-        "schema-extractor.metadataUri": {
+        "schema-extractor.releaseList": {
           "type": "string",
-          "default": "https://raw.githubusercontent.com/luxass/vscode-schemas/main/metadata.json",
-          "description": "The URI to the metadata file (Local File or URL)"
+          "default": "https://raw.githubusercontent.com/luxass/vscode-schemas/main/schemas/.vscode-schemas.json",
+          "description": "The URI to the list of releases"
         },
         "schema-extractor.output": {
           "type": "string",
           "default": "./extracted-schemas",
           "description": "Output path for the extracted schemas"
-        },
-        "schema-extractor.keybindings": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable built-in keybinds to generate schemas."
         }
       }
-    },
-    "keybindings": [
-      {
-        "command": "schema-extractor.extract-all",
-        "key": "ctrl+shift+alt+s",
-        "mac": "cmd+shift+alt+s",
-        "when": "config.schema-extractor.keybindings"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "concurrently \"pnpm run build:web --minify\" \"pnpm run build:ext --minify\"",

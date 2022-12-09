@@ -1,15 +1,16 @@
-import { ExtensionContext, commands, window, workspace, Uri } from 'vscode';
+import { ExtensionContext, commands, window, workspace, Uri } from "vscode";
 import {
   extractSchema,
   getConfiguration,
+  getReleases,
   getSchemaList,
   getWorkspace
-} from './utils';
+} from "./utils";
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(
-    commands.registerCommand('schema-extractor.extract-all', async () => {
-      const { metadataUri, outputPath } = getConfiguration();
+    commands.registerCommand("schema-extractor.extract-all", async () => {
+      const { releaseList, outputPath } = getConfiguration();
 
       const _workspace = await getWorkspace();
 
@@ -19,32 +20,52 @@ export function activate(context: ExtensionContext) {
 
       const baseUri = _workspace.uri;
 
-      const root = await getSchemaList(baseUri, metadataUri);
-      
+      const releases = await getReleases(baseUri, releaseList);
+
+      if (!releases) {
+        return;
+      }
+
+      const release = await window.showQuickPick(
+        releases.map((release) => release.name),
+        {
+          title: "Pick a release"
+        }
+      );
+
+      const releaseUri = releases.find((r) => r.name === release)?.url;
+      console.log(releaseUri);
+
+      if (!release || !releaseUri) {
+        return;
+      }
+
+      const root = await getSchemaList(baseUri, releaseUri);
+
       if (!root) {
         return;
       }
 
       if (!root.schemas) {
-        window.showErrorMessage('No schemas found in list.');
+        window.showErrorMessage("No schemas found in list.");
         return;
       }
 
       if (!Array.isArray(root.schemas)) {
-        window.showErrorMessage('Schemas is a non-array.');
+        window.showErrorMessage("Schemas is a non-array.");
         return;
       }
 
       let output =
         outputPath ||
         (await window.showInputBox({
-          title: 'Output path',
-          value: './'
+          title: "Output path",
+          value: "./"
         })) ||
-        './';
+        "./";
 
       if (!output) {
-        output = './';
+        output = "./";
       }
 
       await workspace.fs.createDirectory(Uri.joinPath(baseUri, output));
@@ -53,17 +74,17 @@ export function activate(context: ExtensionContext) {
         ...(root.schemas || []).map(async (schema) =>
           extractSchema(baseUri, output, schema)
         ),
-        ...(root.schema_urls || []).map(async (schema) =>
+        ...(root.externalSchemas || []).map(async (schema) =>
           extractSchema(baseUri, output, schema)
         )
       ]);
-      window.showInformationMessage('Schemas extracted.');
+      window.showInformationMessage("Schemas extracted.");
     })
   );
 
   context.subscriptions.push(
-    commands.registerCommand('schema-extractor.extract-one', async () => {
-      const { metadataUri, outputPath } = getConfiguration();
+    commands.registerCommand("schema-extractor.extract-one", async () => {
+      const { releaseList, outputPath } = getConfiguration();
 
       const _workspace = await getWorkspace();
 
@@ -73,26 +94,46 @@ export function activate(context: ExtensionContext) {
 
       const baseUri = _workspace.uri;
 
-      const root = await getSchemaList(baseUri, metadataUri);
+      const releases = await getReleases(baseUri, releaseList);
 
-      if (!root) {
+      if (!releases) {
         return;
       }
 
-      if (!root.schemas) {
-        window.showErrorMessage('No schemas found in list.');
+      const release = await window.showQuickPick(
+        releases.map((release) => release.name),
+        {
+          title: "Pick a release"
+        }
+      );
+
+      const releaseUri = releases.find((r) => r.name === release)?.url;
+      console.log(releaseUri);
+
+      if (!release || !releaseUri) {
         return;
       }
 
-      if (!Array.isArray(root.schemas)) {
-        window.showErrorMessage('Schemas is a non-array.');
+      const schemas = await getSchemaList(baseUri, releaseUri);
+
+      if (!schemas) {
+        return;
+      }
+
+      if (!schemas.schemas) {
+        window.showErrorMessage("No schemas found in list.");
+        return;
+      }
+
+      if (!Array.isArray(schemas.schemas)) {
+        window.showErrorMessage("Schemas is a non-array.");
         return;
       }
 
       const schema = await window.showQuickPick(
-        root.schemas.concat(root.schema_urls),
+        schemas.schemas.concat(schemas.externalSchemas),
         {
-          title: 'Pick a schema'
+          title: "Pick a schema"
         }
       );
 
@@ -103,13 +144,13 @@ export function activate(context: ExtensionContext) {
       let output =
         outputPath ||
         (await window.showInputBox({
-          title: 'Output path',
-          value: './'
+          title: "Output path",
+          value: "./"
         })) ||
-        './';
+        "./";
 
       if (!output) {
-        output = './';
+        output = "./";
       }
 
       await workspace.fs.createDirectory(Uri.joinPath(baseUri, output));

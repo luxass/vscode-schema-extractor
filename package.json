@@ -6,7 +6,7 @@
   "icon": "media/icon.png",
   "version": "0.3.1",
   "engines": {
-    "vscode": "^1.70.0"
+    "vscode": "^1.45.0"
   },
   "author": {
     "name": "Lucas Nørgård",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.9",
-    "@types/vscode": "^1.70.0",
+    "@types/vscode": "1.45.0",
     "@vscode/test-web": "^0.0.32",
     "concurrently": "^7.6.0",
     "esbuild": "^0.15.14",
@@ -84,5 +84,6 @@
   "capabilities": {
     "virtualWorkspaces": true
   },
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "pnpm@9.14.4"
 }

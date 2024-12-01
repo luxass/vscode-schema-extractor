@@ -22,7 +22,7 @@ export function activate(context: ExtensionContext) {
       const baseUri = _workspace.uri;
 
       try {
-        const schemaList = await fetch("https://raw.githubusercontent.com/luxass/vscode-schemas/refs/heads/main/schemas/" + version + "/schema-list.json")
+        const schemaList = await fetch("https://raw.githubusercontent.com/luxass/vscode-schemas/refs/heads/main/schemas/v" + version + "/schema-list.json")
 
         const schemaListJson = await schemaList.json();
 

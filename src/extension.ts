@@ -1,4 +1,4 @@
-import { ExtensionContext, commands, window, workspace, Uri, version } from "vscode";
+import { ExtensionContext, commands, window, workspace, Uri, version,  } from "vscode";
 import {
   extractSchema,
   getConfiguration,

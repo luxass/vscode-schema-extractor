@@ -34,7 +34,7 @@ build({
   outdir: target === "web" ? "dist/browser" : "dist",
   platform: target === "web" ? "browser" : "node",
   sourcemap: mode === "development",
-  target: ["es2020", "chrome91", "node16"],
+  target: ["node14"],
   minify: minify,
   treeShaking: true,
   tsconfig: target === "web" ? "tsconfig.web.json" : "tsconfig.json",

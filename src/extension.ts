@@ -6,6 +6,7 @@ import {
   getSchemaList,
   getWorkspace
 } from "./utils";
+import fetch from "node-fetch";
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(

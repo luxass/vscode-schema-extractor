@@ -17,8 +17,7 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:schema-extractor.extract-all",
-    "onCommand:schema-extractor.extract-one"
+    "onCommand:schema-extractor.extract-all"
   ],
   "repository": {
     "type": "git",
@@ -31,11 +30,6 @@
       {
         "command": "schema-extractor.extract-all",
         "title": "Extract Schemas",
-        "category": "Schema Extractor"
-      },
-      {
-        "command": "schema-extractor.extract-one",
-        "title": "Extract Schema",
         "category": "Schema Extractor"
       }
     ],
@@ -56,7 +50,6 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "concurrently \"pnpm run build:web --minify\" \"pnpm run build:ext --minify\"",
     "build": "concurrently \"pnpm run build:web\" \"pnpm run build:ext\"",
     "build:web": "node --experimental-modules ./scripts/build.mjs --target web --mode production",
     "build:ext": "node --experimental-modules ./scripts/build.mjs --target ext --mode production",
@@ -76,7 +69,7 @@
     "concurrently": "^7.6.0",
     "esbuild": "^0.15.14",
     "typescript": "^4.9.3",
-    "vsce": "^2.14.0"
+    "@vscode/vsce": "^3.2.1"
   },
   "dependencies": {
     "node-fetch": "^3.3.0"
